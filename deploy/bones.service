@@ -1,0 +1,13 @@
+[Unit]
+Description=Bones API
+After=network.target
+
+[Service]
+Type=simple
+User=bones
+WorkingDirectory=/opt/bones
+ExecStart=/opt/bones/.venv/bin/gunicorn bones.app:app --bind 127.0.0.1:8081 --workers 2
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

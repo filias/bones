@@ -1,0 +1,14 @@
+[Unit]
+Description=Bones Deploy Webhook
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/bones
+Environment=WEBHOOK_SECRET=REPLACE_ME
+ExecStart=/opt/bones/.venv/bin/python deploy/webhook.py
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
