@@ -25,20 +25,28 @@ ESKELETONS = {
     "zygomatic": ("skull", "zygomatic", "Lateral"),
     "nasal": ("skull", "nasal", "Anterior"),
     "lacrimal": ("skull", "lacrimal", "Lateral"),
-    # Throat
-    "hyoid": ("skull", "hyoid", "Anterior"),
+    "inferior-nasal-concha": ("skull", "conchae", "Lateral"),
+    # Spine
+    "atlas": ("vertebrae", "cervical_vertebra_1_-_atlas", "Anterior"),
+    "axis": ("vertebrae", "cervical_vertebra_2_-_axis", "Anterior"),
+    "cervical-vertebrae": ("vertebrae", "cervical_vertebra_3", "Anterior"),
+    "thoracic-vertebrae": ("vertebrae", "thoracic_vertebra_6", "Anterior"),
+    "lumbar-vertebrae": ("vertebrae", "lumbar_vertebra_1", "Anterior"),
+    "sacrum": ("vertebrae", "sacrum", "Anterior"),
+    "coccyx": ("vertebrae", "coccyx", "Anterior"),
     # Thorax
     "sternum": ("thorax", "sternum", "Anterior"),
-    "rib": ("thorax", "rib_7", "Anterior"),
-    # Shoulder / upper limb
-    "clavicle": ("upper_limb", "clavicle", "Anterior"),
+    "manubrium": ("thorax", "sternum", "Superior"),
+    "rib": ("thorax", "rib_7", "Superior"),
+    "clavicle": ("thorax", "clavicle", "Anterior"),
+    # Upper limb
     "scapula": ("upper_limb", "scapula", "Anterior"),
     "humerus": ("upper_limb", "humerus", "Anterior"),
     "radius": ("upper_limb", "radius", "Anterior"),
     "ulna": ("upper_limb", "ulna", "Anterior"),
     # Wrist (carpals)
-    "scaphoid": ("hands", "scaphoid", "Dorsal"),
-    "lunate": ("hands", "lunate", "Dorsal"),
+    "scaphoid": ("hands", "scaphoid", "Distal"),
+    "lunate": ("hands", "lunate", "Distal"),
     "triquetral": ("hands", "triquetral", "Dorsal"),
     "pisiform": ("hands", "pisiform", "Dorsal"),
     "trapezium": ("hands", "trapezium", "Dorsal"),
@@ -48,6 +56,7 @@ ESKELETONS = {
     # Hand
     "metacarpals": ("hands", "metacarpal_3", "Dorsal"),
     "proximal-phalanx-hand": ("hands", "manual_proximal_phalanx_3", "Dorsal"),
+    "middle-phalanx-hand": ("hands", "manual_intermediate_phalanx_3", "Dorsal"),
     # Pelvis
     "hip-bone": ("lower_limb", "os_coxa", "Anterior"),
     "ilium": ("lower_limb", "os_coxa", "Lateral"),
@@ -62,13 +71,14 @@ ESKELETONS = {
     "calcaneus": ("feet", "calcaneus", "Dorsal"),
     "talus": ("feet", "talus", "Dorsal"),
     "navicular": ("feet", "navicular", "Dorsal"),
-    "cuboid": ("feet", "cuboid", "Dorsal"),
+    "cuboid": ("feet", "cuboid", "Distal"),
     "medial-cuneiform": ("feet", "medial_cuneiform", "Dorsal"),
     "intermediate-cuneiform": ("feet", "intermediate_cuneiform", "Dorsal"),
     "lateral-cuneiform": ("feet", "lateral_cuneiform", "Dorsal"),
     # Foot
     "metatarsals": ("feet", "metatarsal_3", "Dorsal"),
     "proximal-phalanx-foot": ("feet", "pedal_proximal_phalanx_1", "Dorsal"),
+    "distal-phalanx-foot": ("feet", "pedal_distal_phalanx_1", "Dorsal"),
 }
 
 
