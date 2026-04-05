@@ -1,6 +1,5 @@
-"""Download bone images from Wikimedia Commons (Gray's Anatomy illustrations)."""
+"""Download bone images from eSkeletons.org and Wikimedia Commons."""
 
-import hashlib
 import os
 import time
 
@@ -10,6 +9,79 @@ from bones.catalog import BONES
 
 HEADERS = {"User-Agent": "Bones/1.0 (anatomy image database)"}
 IMAGES_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "images")
+
+# eSkeletons.org URL mapping: bone_id -> (region, bone_name, preferred_orientation)
+ESKELETONS = {
+    # Skull — cranial
+    "frontal": ("skull", "frontal", "Superior"),
+    "parietal": ("skull", "parietal", "Lateral"),
+    "temporal": ("skull", "temporal", "Lateral"),
+    "occipital": ("skull", "occipital", "Posterior"),
+    "sphenoid": ("skull", "sphenoid", "Anterior"),
+    "ethmoid": ("skull", "ethmoid", "Anterior"),
+    # Skull — facial
+    "mandible": ("skull", "mandible", "Lateral"),
+    "maxilla": ("skull", "maxilla", "Anterior"),
+    "zygomatic": ("skull", "zygomatic", "Lateral"),
+    "nasal": ("skull", "nasal", "Anterior"),
+    "lacrimal": ("skull", "lacrimal", "Lateral"),
+    # Throat
+    "hyoid": ("skull", "hyoid", "Anterior"),
+    # Thorax
+    "sternum": ("thorax", "sternum", "Anterior"),
+    "rib": ("thorax", "rib_7", "Anterior"),
+    # Shoulder / upper limb
+    "clavicle": ("upper_limb", "clavicle", "Anterior"),
+    "scapula": ("upper_limb", "scapula", "Anterior"),
+    "humerus": ("upper_limb", "humerus", "Anterior"),
+    "radius": ("upper_limb", "radius", "Anterior"),
+    "ulna": ("upper_limb", "ulna", "Anterior"),
+    # Wrist (carpals)
+    "scaphoid": ("hands", "scaphoid", "Dorsal"),
+    "lunate": ("hands", "lunate", "Dorsal"),
+    "triquetral": ("hands", "triquetral", "Dorsal"),
+    "pisiform": ("hands", "pisiform", "Dorsal"),
+    "trapezium": ("hands", "trapezium", "Dorsal"),
+    "trapezoid": ("hands", "trapezoid", "Dorsal"),
+    "capitate": ("hands", "capitate", "Dorsal"),
+    "hamate": ("hands", "hamate", "Dorsal"),
+    # Hand
+    "metacarpals": ("hands", "metacarpal_3", "Dorsal"),
+    "proximal-phalanx-hand": ("hands", "manual_proximal_phalanx_3", "Dorsal"),
+    # Pelvis
+    "hip-bone": ("lower_limb", "os_coxa", "Anterior"),
+    "ilium": ("lower_limb", "os_coxa", "Lateral"),
+    "ischium": ("lower_limb", "os_coxa", "Medial"),
+    "pubis": ("lower_limb", "os_coxa", "Anterior"),
+    # Lower limb
+    "femur": ("lower_limb", "femur", "Anterior"),
+    "patella": ("lower_limb", "patella", "Anterior"),
+    "tibia": ("lower_limb", "tibia", "Anterior"),
+    "fibula": ("lower_limb", "fibula", "Anterior"),
+    # Ankle (tarsals)
+    "calcaneus": ("feet", "calcaneus", "Dorsal"),
+    "talus": ("feet", "talus", "Dorsal"),
+    "navicular": ("feet", "navicular", "Dorsal"),
+    "cuboid": ("feet", "cuboid", "Dorsal"),
+    "medial-cuneiform": ("feet", "medial_cuneiform", "Dorsal"),
+    "intermediate-cuneiform": ("feet", "intermediate_cuneiform", "Dorsal"),
+    "lateral-cuneiform": ("feet", "lateral_cuneiform", "Dorsal"),
+    # Foot
+    "metatarsals": ("feet", "metatarsal_3", "Dorsal"),
+    "proximal-phalanx-foot": ("feet", "pedal_proximal_phalanx_1", "Dorsal"),
+}
+
+
+def get_eskeletons_image(bone_id):
+    """Get an image URL from eSkeletons.org."""
+    mapping = ESKELETONS.get(bone_id)
+    if not mapping:
+        return None
+    region, bone_name, orientation = mapping
+    return (
+        f"https://www.eskeletons.org/files/image/orientation/"
+        f"human_{region}_{bone_name}_{orientation}.jpg"
+    )
 
 
 def get_grays_image(search_term):
@@ -33,7 +105,6 @@ def get_grays_image(search_term):
     if not results:
         return None
 
-    # Prefer results with the bone name in the title
     name_lower = search_term.lower().split("(")[0].strip()
     chosen = results[0]["title"]
     for r in results:
@@ -89,7 +160,6 @@ def get_wikipedia_article_images(title):
 
     name_lower = title.split("(")[0].strip().lower()
     keywords = [w for w in name_lower.split() if len(w) > 3]
-    # Also look for Gray's or anatomical terms
     good_files = []
 
     for page in pages.values():
@@ -97,7 +167,6 @@ def get_wikipedia_article_images(title):
             fname = img["title"].lower()
             if "commons-logo" in fname or "icon" in fname:
                 continue
-            # Prefer Gray's illustrations or files with the bone name
             is_grays = "gray" in fname
             has_name = any(kw in fname for kw in keywords)
             if is_grays or has_name:
@@ -106,11 +175,9 @@ def get_wikipedia_article_images(title):
     if not good_files:
         return None
 
-    # Prefer Gray's illustrations
     good_files.sort(key=lambda x: (not x[1], x[0]))
     chosen = good_files[0][0]
 
-    # Get image URL via the Wikipedia imageinfo API
     resp2 = requests.get(
         "https://en.wikipedia.org/w/api.php",
         params={
@@ -155,23 +222,33 @@ def get_file_url(file_title):
     for page in pages.values():
         if "imageinfo" in page:
             info = page["imageinfo"][0]
-            # Prefer thumburl, fall back to full url
             return info.get("thumburl") or info.get("url")
     return None
 
 
 def download_image(url, filepath):
     """Download an image to disk."""
-    resp = requests.get(url, headers=HEADERS, timeout=30, allow_redirects=True)
-    if resp.status_code == 200 and len(resp.content) > 500:
-        with open(filepath, "wb") as f:
-            f.write(resp.content)
-        return True
+    try:
+        resp = requests.get(url, headers=HEADERS, timeout=30, allow_redirects=True)
+        content_type = resp.headers.get("content-type", "")
+        is_image = content_type.startswith("image/")
+        if resp.status_code == 200 and is_image and len(resp.content) > 500:
+            with open(filepath, "wb") as f:
+                f.write(resp.content)
+            return True
+    except Exception:
+        pass
     return False
 
 
-def download_all():
-    """Download images for all bones in the catalog."""
+def download_all(force=False):
+    """Download images for all bones in the catalog.
+
+    Uses eSkeletons.org as the primary source (clean photos),
+    with Wikimedia Commons as fallback.
+
+    Pass force=True to re-download all images.
+    """
     os.makedirs(IMAGES_DIR, exist_ok=True)
 
     found = 0
@@ -179,28 +256,31 @@ def download_all():
 
     for bone in BONES:
         bone_id = bone["id"]
-        # Check if already downloaded (any extension)
-        existing = [
-            f
-            for f in os.listdir(IMAGES_DIR)
-            if f.startswith(bone_id + ".") and not f.endswith(".json")
-        ]
-        if existing:
-            print(f"  skip {bone['name']} (already have {existing[0]})")
-            found += 1
-            continue
+
+        if not force:
+            existing = [
+                f
+                for f in os.listdir(IMAGES_DIR)
+                if f.startswith(bone_id + ".") and not f.endswith(".json")
+            ]
+            if existing:
+                print(f"  skip {bone['name']} (already have {existing[0]})")
+                found += 1
+                continue
 
         name = bone["wikipedia"]
         print(f"  fetch {bone['name']}...", end=" ", flush=True)
 
+        # Try eSkeletons first (consistent, clean photos)
         sources = [
-            get_grays_image(name),
-            get_wikipedia_article_images(name),
-            get_wikipedia_image(name),
+            ("eskeletons", get_eskeletons_image(bone_id)),
+            ("grays", get_grays_image(name)),
+            ("wikipedia", get_wikipedia_article_images(name)),
+            ("wikipedia", get_wikipedia_image(name)),
         ]
 
         downloaded = False
-        for url in sources:
+        for source_name, url in sources:
             if not url:
                 continue
             ext = "png" if ".png" in url.lower() else "jpg"
@@ -208,7 +288,7 @@ def download_all():
                 ext = "svg"
             filepath = os.path.join(IMAGES_DIR, f"{bone_id}.{ext}")
             if download_image(url, filepath):
-                print(f"ok ({ext})")
+                print(f"ok ({source_name})")
                 found += 1
                 downloaded = True
                 break
@@ -217,7 +297,7 @@ def download_all():
             print("not found")
             missing.append(bone["name"])
 
-        time.sleep(0.5)  # be polite to the API
+        time.sleep(0.3)
 
     print(f"\nDone: {found}/{len(BONES)} images downloaded")
     if missing:
@@ -225,4 +305,7 @@ def download_all():
 
 
 if __name__ == "__main__":
-    download_all()
+    import sys
+
+    force = "--force" in sys.argv
+    download_all(force=force)

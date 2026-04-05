@@ -1,6 +1,6 @@
 # bones
 
-A database and API of human bone images and metadata. 56 of 65 bones have images sourced from Wikimedia Commons (Gray's Anatomy illustrations and Wikipedia).
+A database and API of human bone images and metadata. All 65 bones have images.
 
 ## Run
 
@@ -26,7 +26,17 @@ Then open http://localhost:8081
 uv run python -m bones.download
 ```
 
-Sources images from Wikimedia Commons (Gray's Anatomy illustrations and Wikipedia article images).
+Use `--force` to re-download all images.
+
+## Image sources and attribution
+
+Images are sourced from (in order of preference):
+
+1. **[eSkeletons.org](https://www.eskeletons.org/)** — photographs by John Kappelman and the University of Texas at Austin, licensed under [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/)
+2. **Wikimedia Commons** — Gray's Anatomy illustrations (public domain)
+3. **Wikipedia** — article images (various licenses)
+
+eSkeletons images are used for non-commercial, educational purposes with attribution as required by their license.
 
 ## Project structure
 
@@ -36,5 +46,5 @@ bones/
 │   ├── app.py        # Flask API
 │   ├── catalog.py    # Bone metadata (65 bones)
 │   └── download.py   # Image downloader
-└── images/           # Downloaded bone images
+└── images/           # Downloaded bone images (gitignored)
 ```
